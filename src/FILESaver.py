@@ -1,0 +1,16 @@
+from abc import ABC, abstractmethod
+
+
+class FILESaver(ABC):
+    @abstractmethod
+    def add_vacancy(self):
+        pass
+
+    @abstractmethod
+    def get_vacancies_by_salary(self):
+        pass
+
+    @abstractmethod
+    def delete_vacancy(self):
+        pass
+
