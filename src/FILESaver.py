@@ -7,10 +7,10 @@ class FILESaver(ABC):
         pass
 
     @abstractmethod
-    def get_vacancies_by_salary(self, salary):
+    def get_vacancies_by_salary(self):
         pass
 
     @abstractmethod
-    def delete_vacancy(self, vacancy):
+    def delete_vacancy(self):
         pass
 
