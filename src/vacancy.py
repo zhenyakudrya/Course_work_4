@@ -1,54 +1,80 @@
-import json
-
-
 class Vacancy:
     """
-    Класс должен поддерживать методы сравнения вакансий между собой по зарплате
-    и валидировать данные, которыми инициализируются его атрибуты.
+    Класс для работы с вакансиями
     """
-    vacancies = []
 
-    def __init__(self, vacancy_name, vacancy_url, vacancy_salary, vacancy_description):
-        self.vacancy_name = vacancy_name
-        self.vacancy_url = vacancy_url
-        self.vacancy_salary = vacancy_salary
-        self.vacancy_description = vacancy_description
+    def __init__(self, title, url, salary, employer) -> None:
+        """ Создание экземпляра класса Vacancy
+            - title: название вакансии
+            - url: ссылка на вакансию
+            - salary: зарплата(от)
+            - employer: работодатель
+        """
+        self.title = title
+        self.url = url
+        self.salary = salary
+        self.employer = employer
 
-    def __repr__(self):
-        return f'Vacancy({self.vacancy_name}, {self.vacancy_url}, {self.vacancy_salary}, {self.vacancy_description})'
+    def __repr__(self) -> str:
+        """
+        Возвращает информацию об объекте: название класса(атрибуты экземпляра)
+        """
+        return f'{self.__class__.__name__}({self.title}, {self.url}, {self.salary}, {self.employer}'
 
-    def __gt__(self, other):
-        return int(self.vacancy_salary) > int(other.vacancy_salary)
+    def __str__(self) -> str:
+        """
+        Возвращает информацию о вакансии: название(ссылка)
+        """
+        return f"{self.title} ({self.url})"
 
-    def __lt__(self, other):
-        return int(self.vacancy_salary) < int(other.vacancy_salary)
+    @staticmethod
+    def _is_valid_title(title) -> bool:
+        """
+        Проверка названия вакансии
+        """
+        return len(title) > 0 and isinstance(title, str)
 
-    def __eq__(self, other):
-        return int(self.vacancy_salary) == int(other.vacancy_salary)
+    @staticmethod
+    def _is_valid_url(url) -> bool:
+        """
+        Проверка названия ссылки на вакансию
+        """
+        return url.startswith('http://') and isinstance(url, str)
 
-    @classmethod
-    def from_list(cls, vacancies_list):
-        for item in vacancies_list:
-            vac = Vacancy(f"{item['vacancy_name']}", f"{item['vacancy_url']}", f"{item['vacancy_salary']}",
-                          f"{item['vacancy_description']}")
-            cls.vacancies.append(vac)
+    @staticmethod
+    def _is_valid_salary(salary) -> bool:
+        """
+        Проверка названия зарплаты
+        """
+        return isinstance(salary, int)
 
-    @classmethod
-    def sort_by_salary(cls):
-        cls.vacancies.sort(key=lambda x: x.vacancy_salary, reverse=True)
+    @staticmethod
+    def _is_valid_employer(employer) -> bool:
+        """
+        Проверка названия работодателя
+        """
+        return len(employer) > 0 and isinstance(employer, str)
 
-    @classmethod
-    def sort_by_name(cls):
-        cls.vacancies.sort(key=lambda x: x.vacancy_name, reverse=True)
+    def __setattr__(self, key, value):
+        """
+        Валидирует данные, которыми инициализируются атрибуты экземпляра
+        """
+        if key == 'title' and not self._is_valid_title(value):
+            raise Exception("Название вакансии не может быть пустым и должно быть строкой")
+        if key == 'salary' and not self._is_valid_salary(value):
+            raise Exception("Зарплата должна быть числом")
+        if key == 'employer' and not self._is_valid_employer(value):
+            raise Exception("Название работодателя не может быть пустым и должно быть строкой")
+        super().__setattr__(key, value)
 
+    def __gt__(self, other) -> bool:
+        """
+        Возвращает результат сравнения(>) зарплаты двух вакансий
+        """
+        return self.salary > other.salary
 
-# file = 'vacancies.json'
-#
-# with open(file, "r") as my_file:
-#     vacancies_json = my_file.read()
-#
-# vacancies = json.loads(vacancies_json)
-#
-# Vacancy.from_list(vacancies)
-# Vacancy.sort_by_salary()
-
+    def __it__(self, other) -> bool:
+        """
+        Возвращает результат сравнения(<) зарплаты двух вакансий
+        """
+        return self.salary < other.salary

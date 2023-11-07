@@ -1,21 +1,62 @@
 from FILESaver import FILESaver
 import json
+import os
 
 
 class JSONSaver(FILESaver):
-    def add_vacancy(self, vacancy_list):
-        with open("vacancies.json", "w", encoding='utf-8') as json_file:
-            json.dump(vacancy_list, json_file, indent=4, sort_keys=True)
+    """
+    Абстрактный класс для работы с json-файлом вакансий
+    """
 
-    def get_vacancies_by_salary(self):
-        # desc = True if input(
-        #     'От - \n'
-        #     'До - '
-        # ).lower() == '>' else False
-        # vacancies = ...
-        # return sorted(vacancies, key=lambda x: (x.salary_from if x.salary_from else 0, x.salary_to if x.salary_to else 0), reverse=desc)
+    file_name = "vacancies.json"
 
-    def delete_vacancy(self):
-        with open("vacancies.json", "w") as f:
+    def add_vacancies(self, vacancies) -> None:
+        """
+        Добавляет вакансии в json-файл
+        """
+        if os.stat(self.file_name).st_size == 0:  # если файл пустой
+            with open(self.file_name, "w", encoding='utf8') as file:
+                json.dump(vacancies, file, indent=2, ensure_ascii=False)  # записываем данные в файл
+
+        else:  # если файл не пустой
+            with open(self.file_name, "r", encoding='utf8') as file:
+                data = json.load(file)  # выгружаем все данные из файла
+                data.extend(vacancies)  # добавляем новые данные
+            with open(self.file_name, "w", encoding='utf8') as file:
+                json.dump(data, file, indent=2, ensure_ascii=False)  # перезаписываем файл
+
+    def filter_vacancies(self, search_word) -> list:
+        """
+        Возвращает вакансии из json-файла, соответствующие поисковому запросу: search_word
+        """
+
+        with open(self.file_name, "r", encoding='utf8') as file:
+            data = json.load(file)
+            filtered_list = []
+
+            for vacancy in data:
+                for key, value in vacancy.items():
+                    if search_word.lower() in str(value).lower():
+                        filtered_list.append(vacancy)
+
+            return filtered_list
+
+    def top_vacancies(self, top_n) -> list:
+        """
+        Возвращает top_n вакансий из json-файла, отсортированные по уровню зарплаты
+        """
+
+        with open(self.file_name, "r", encoding='utf8') as file:
+            data = json.load(file)
+            data.sort(key=lambda dictionary: dictionary["salary_from"], reverse=True)
+
+            return data[: top_n]
+
+    def delete_vacancies(self) -> None:
+        """
+        Удаляет все вакансии из json-файла
+        """
+
+        with open(self.file_name, "w", encoding='utf8') as file:
             pass
 
