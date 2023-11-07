@@ -1,61 +1,67 @@
 from headhunterapi import HeadHunterAPI
 from superjobapi import SuperJobAPI
-from vacancy import Vacancy
+from jsonsaver import JSONSaver
+from user_print import user_print
 
 
 def user_interaction():
-    """ Обработка запроса пользователя и вывод информации """
-    ''' Сценарии использования
-        1. Поиск вакансий
-            1. Поиск вакансии
-                Запросить платформу HH SJ или оба
-                Запросить ключевое слово (слова если расширенный поиск и где искать: везде, только название, название фирмы)        
-        2. Работа с найденными вакансиями
-            1. Сортировка найденных вакансий
-                Указать параметр сортировки (зарплата, название, фирма)
-                Указать количество вакансий  
-            2. Сохранение данных в файл (JSON)
-                Выбрать формат и имя файла
-                Выбрать параметры выбора вакансий
-            3. Вывод на экран'''
 
-    question = input('Выберете платформу для поиска вакансий: 1 - HeadHunter\n'
-                     '                                        2 - SuperJob\n'
-                     '                                        3 - Обе платформы\n'
-                     ' ')
-    if question == 1:
-        keyword = input('Введите ключевое слово для поиска: ')
-        hh = HeadHunterAPI()
-        vacancies_list = hh.get_vacancies(f'{keyword}')
-        sort_param = input('Введите параметр для сортировки: 1 - Название вакансии, 2 - Зарплата ')
-        if sort_param == 1:
-            pass
-        elif sort_param == 2:
-            pass
-    elif question == 2:
-        keyword = input('Введите ключевое слово для поиска: ')
-        sj = SuperJobAPI()
-        vacancies_list = sj.get_vacancies(f'{keyword}')
-        sort_param = input('Введите параметр для сортировки: 1 - Название вакансии, 2 - Зарплата ')
-        if sort_param == 1:
-            pass
-        elif sort_param == 2:
-            pass
-    elif question == 3:
-        keyword = input('Введите ключевое слово для поиска: ')
-        hh = HeadHunterAPI()
-        sj = SuperJobAPI()
-        vacancies_list = hh.get_vacancies(f'{keyword}') + sj.get_vacancies(f'{keyword}')
-        sort_param = input('Введите параметр для сортировки: 1 - Название вакансии, 2 - Зарплата ')
-        if sort_param == 1:
-            pass
-        elif sort_param == 2:
-            pass
-    else:
-        print('Вы не выбрали платформу для поиска')
+    # Создание экземпляра класса JSONSaver
+    json_vac = JSONSaver()
 
-# kkk = user_interaction()
-list1 = [1, 2, 3]
-list2 = [4, 5, 6]
-list3 = list1 + list2
-print(list3)
+    # Очищаем файл от предыдущих запусков программы
+    json_vac.delete_vacancies()
+
+    # Получаем от пользователя ключевое слово и платформы для сбора вакансий
+    keyword = input("Введите ключевое слово для поиска вакансий: ")
+    json_vac = JSONSaver()
+
+    platform_hh = input("Вас интересуют вакансии с сайта HeadHunter? y/n ")
+
+    platform_sj = input("Вас интересуют вакансии с сайта SuperJob? y/n ")
+
+    if platform_hh != "y" and platform_sj != "y":
+        print("Вы не выбрали ни одну платформу")
+        exit()
+
+    # Пользователь выбирает необходимую команду
+    search_way = input("""Выберите команду:
+    sort - выдаст вакансии, содержащие ключевое слово
+    top - выдаст лучшие вакансии по зарплате \nsort или top: """)
+
+    if search_way not in ("sort", "top"):
+        print("Неверная команда")
+        exit()
+
+    # Собираем файл из вакансий на выбранных платформах
+    if platform_hh == "y":
+        hh_api = HeadHunterAPI()
+        hh_vacancies = hh_api.get_vacancies(keyword)
+        hh_standard_vacancies = hh_api.standard_vacancies(hh_vacancies)
+        json_vac.add_vacancies(hh_standard_vacancies)
+
+    if platform_sj == "y":
+        sj_api = SuperJobAPI()
+        sj_vacancies = sj_api.get_vacancies(keyword)
+        sj_standard_vacancies = sj_api.standard_vacancies(sj_vacancies)
+        json_vac.add_vacancies(sj_standard_vacancies)
+
+    # Выводим вакансии по команде сортировки
+    if search_way == "sort":
+        search_word = input("Введите поисковый запрос для фильтрации вакансий: ")
+        filtered_vacancies = json_vac.filter_vacancies(search_word)
+        if not filtered_vacancies:
+            print("Нет вакансий, соответствующих заданным критериям.")
+        else:
+            for vacancy in user_print(filtered_vacancies):
+                print(vacancy)
+
+    # Выводим вакансии по команде top
+    elif search_way == "top":
+        top_n = int(input("Введите количество вакансий для вывода в топ N: "))
+        top_vacancies = json_vac.top_vacancies(top_n)
+        if not top_vacancies:
+            print("Нет вакансий, соответствующих заданным критериям.")
+        else:
+            for vacancy in user_print(top_vacancies):
+                print(vacancy)

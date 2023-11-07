@@ -1,32 +1,55 @@
 from JobSiteAPI import JobSiteAPI
 import requests
-import json
-from exceptions import ParsingError
 
 
 class HeadHunterAPI(JobSiteAPI):
-    __url = 'https://api.hh.ru/vacancies'
+    """
+    Класс для работы с API сайта с вакансиями: hh.ru
+    """
 
-    def get_vacancies(self, keyword) -> list:
-        req = requests.get(self.__url,
-                           params={'text': f'NAME:{keyword}', 'page': 0, 'per_page': 100})
-        if req.status_code != 200:
-            raise ParsingError('Ошибка получения вакансий!')
-        req_json = req.json()
-        vacancies_list = []
-        for r in req_json["items"]:
-            vacancies_dict = {"vacancy_name": r["name"],
-                              "vacancy_url": r["alternate_url"],
-                              "vacancy_salary": f'{r["salary"]["from"]}-{r["salary"]["to"]}', #Проверить
-                              "vacancy_description": r["snippet"]["responsibility"]}
-            vacancies_list.append(vacancies_dict)
-        return vacancies_list
+    def __init__(self):
+        """
+        Создание экземпляра класса HeadHunterAPI
+        """
+        self.url = "https://api.hh.ru/vacancies"
 
+    def get_vacancies(self, keyword) -> dict:
+        """
+        Возвращает отфильтрованные по ключевому слову вакансии с сайта
+        """
+        params = {
+            "text": keyword,  # ключевое слово фильтра
+            "area": 1,  # город поиска работы(1 - Москва)
+            "per_page": 50,  # количество вакансий
+        }
+        response = requests.get(self.url, params=params)
+        if response.status_code == 200:
+            data = response.json()
+            return data
+        else:
+            raise Exception(f"Запрос не выполнен, код ошибки: {response.status_code}")
 
-# hh = HeadHunterAPI()
-# data = hh.get_vacancies('Python')
-# with open("vacancies.json", "w", encoding='utf-8') as json_file:
-#     json.dump(data, json_file, indent=4, sort_keys=True)
-# for item in data['items']:
-#     print(item['salary'])
+    @staticmethod
+    def standard_vacancies(data) -> list:
+        """
+        Приводит данные к единому стандарту
+        """
+        standard_vacancies = []
+        vacancies = data.get("items", [])
+        for vacancy in vacancies:
+            vacancy_title = vacancy.get("name")
+            vacancy_url = vacancy.get("alternate_url")
+            try:
+                vacancy_salary_from = vacancy.get("salary", {}).get("from")
+                if vacancy_salary_from is None:
+                    vacancy_salary_from = 0
+            except AttributeError:
+                vacancy_salary_from = 0
+            vacancy_employer = vacancy.get("employer", {}).get("name")
 
+            standard_vacancies.append({"title": vacancy_title,
+                                       "url": vacancy_url,
+                                       "salary_from": vacancy_salary_from,
+                                       "employer": vacancy_employer})
+
+        return standard_vacancies
